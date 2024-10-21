@@ -135,6 +135,7 @@ local definitions = {
       local escaped = cmdline:gsub([[\\]], [[\\\\]]);
       for _, word_or_item in ipairs(vim.fn.getcompletion(escaped, 'cmdline')) do
         local word = type(word_or_item) == 'string' and word_or_item or word_or_item.word
+        word = word:gsub('%$', '\\$') -- escape dollar to prevent env-var expansion
         local item = { label = word }
         table.insert(items, item)
         if is_option_name_completion and is_boolean_option(word) then
