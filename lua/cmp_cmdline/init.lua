@@ -100,7 +100,9 @@ local definitions = {
       parsed = parsed or {}
 
       -- Check ignore cmd.
-      if vim.tbl_contains(option.ignore_cmds, parsed.cmd) then
+      if vim.iter(option.ignore_cmds):any(function (...)
+        return ... == parsed.cmd
+      end) then
         return {}
       end
 
