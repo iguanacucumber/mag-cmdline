@@ -1,4 +1,4 @@
-local cmp = require('cmp')
+local cmp = require("cmp")
 
 ---@param patterns string[]
 ---@param head boolean
@@ -6,7 +6,7 @@ local cmp = require('cmp')
 local function create_regex(patterns, head)
   local pattern = [[\%(]] .. table.concat(patterns, [[\|]]) .. [[\)]]
   if head then
-    pattern = '^' .. pattern
+    pattern = "^" .. pattern
   end
   return vim.regex(pattern)
 end
@@ -16,7 +16,7 @@ end
 ---@field ignore_cmds string[]
 local DEFAULT_OPTION = {
   treat_trailing_slash = true,
-  ignore_cmds = { 'Man', '!' }
+  ignore_cmds = { "Man", "!" },
 }
 
 local MODIFIER_REGEX = create_regex({
@@ -62,7 +62,7 @@ local function is_boolean_option(word)
     return vim.opt[word]:get()
   end)
   if ok then
-    return type(opt) == 'boolean'
+    return type(opt) == "boolean"
   end
 end
 
@@ -77,7 +77,7 @@ end
 ---@type cmp.Cmdline.Definition[]
 local definitions = {
   {
-    ctype = 'cmdline',
+    ctype = "cmdline",
     regex = [=[[^[:blank:]]*$]=],
     kind = cmp.lsp.CompletionItemKind.Variable,
     isIncomplete = true,
@@ -100,7 +100,7 @@ local definitions = {
       parsed = parsed or {}
 
       -- Check ignore cmd.
-      if vim.iter(option.ignore_cmds):any(function (...)
+      if vim.iter(option.ignore_cmds):any(function(...)
         return ... == parsed.cmd
       end) then
         return {}
@@ -134,37 +134,40 @@ local definitions = {
 
       --- create items.
       local items = {}
-      local escaped = cmdline:gsub([[\\]], [[\\\\]]);
-      local cmdtype = 'cmdline'
-      if vim.fn.getcmdtype() == '@' then
+      local escaped = cmdline:gsub([[\\]], [[\\\\]])
+      local cmdtype = "cmdline"
+      if vim.fn.getcmdtype() == "@" then
         -- Invoke getcmdcompltype() only when getcmdtype() == '@'.
         -- Because once getcmdcompltype() was executed, press <Up> <Down> for ':e ./' will get wrong result on command line.
         local cpl = vim.fn.getcmdcompltype()
-        if cpl ~= '' then
+        if cpl ~= "" then
           cmdtype = cpl
         end
       end
 
       local input_start = string.sub(fixed_input, 1, 1)
-      local is_magic_file = (#arglead ~= 1 and (input_start == '%' or input_start == '#'))
+      local is_magic_file = (#arglead ~= 1 and (input_start == "%" or input_start == "#"))
       if is_magic_file then
-        for _, word_or_item in ipairs(vim.fn.getcompletion(arglead, 'file')) do
-          local word = type(word_or_item) == 'string' and word_or_item or word_or_item.word
-          word = word:gsub('%$', '\\$') -- escape dollar to prevent env-var expansion
-          local item = { label = word, ismagic=true }
+        for _, word_or_item in ipairs(vim.fn.getcompletion(arglead, "file")) do
+          local word = type(word_or_item) == "string" and word_or_item or word_or_item.word
+          word = word:gsub("%$", "\\$") -- escape dollar to prevent env-var expansion
+          local item = { label = word, ismagic = true }
           table.insert(items, item)
         end
       else
-        for _, word_or_item in ipairs(vim.fn.getcompletion(escaped, 'cmdline')) do
-          local word = type(word_or_item) == 'string' and word_or_item or word_or_item.word
-          word = word:gsub('%$', '\\$') -- escape dollar to prevent env-var expansion
+        for _, word_or_item in ipairs(vim.fn.getcompletion(escaped, "cmdline")) do
+          local word = type(word_or_item) == "string" and word_or_item or word_or_item.word
+          word = word:gsub("%$", "\\$") -- escape dollar to prevent env-var expansion
           local item = { label = word }
           table.insert(items, item)
           if is_option_name_completion and is_boolean_option(word) then
-            table.insert(items, vim.tbl_deep_extend('force', {}, item, {
-              label = 'no' .. word,
-              filterText = word,
-            }))
+            table.insert(
+              items,
+              vim.tbl_deep_extend("force", {}, item, {
+                label = "no" .. word,
+                filterText = word,
+              })
+            )
           end
         end
       end
@@ -180,14 +183,14 @@ local definitions = {
             range = {
               start = {
                 line = cursorline,
-                character = #cmdline - #arglead - 1
+                character = #cmdline - #arglead - 1,
               },
-              ['end'] = {
+              ["end"] = {
                 line = cursorline,
-                character = #cmdline - 1
-              }
+                character = #cmdline - 1,
+              },
             },
-            newText = item.label
+            newText = item.label,
           }
           item.insert_text = item.label
           item.label = item.label
@@ -208,7 +211,7 @@ local definitions = {
         end
       end
       return items
-    end
+    end,
   },
 }
 
@@ -216,9 +219,9 @@ local source = {}
 
 source.new = function()
   return setmetatable({
-    before_line = '',
+    before_line = "",
     offset = -1,
-    ctype = '',
+    ctype = "",
     items = {},
   }, { __index = source })
 end
@@ -228,12 +231,12 @@ source.get_keyword_pattern = function()
 end
 
 source.get_trigger_characters = function()
-  return { ' ', '.', '#', '-' }
+  return { " ", ".", "#", "-" }
 end
 
 source.complete = function(self, params, callback)
   local offset = 0
-  local ctype = ''
+  local ctype = ""
   local items = {}
   local kind
   local isIncomplete = false
@@ -243,12 +246,11 @@ source.complete = function(self, params, callback)
       offset = s
       ctype = def.ctype
       items = def.exec(
-        vim.tbl_deep_extend('keep', params.option or {}, DEFAULT_OPTION),
+        vim.tbl_deep_extend("keep", params.option or {}, DEFAULT_OPTION),
         string.sub(params.context.cursor_before_line, s + 1),
         params.context.cursor_before_line,
         params.context:get_reason() == cmp.ContextReason.Manual,
         params.context.cursor.line
-
       )
       kind = def.kind
       isIncomplete = def.isIncomplete
